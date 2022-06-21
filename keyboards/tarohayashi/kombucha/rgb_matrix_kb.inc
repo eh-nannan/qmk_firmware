@@ -11,7 +11,7 @@ RGB_MATRIX_EFFECT(UNDERGLOW_REACTIVE_SEPARATED)
 
 #    ifdef RGB_MATRIX_CUSTOM_EFFECT_IMPLS
 
-# define BACKLIGHT_NUM 22
+# define BACKLIGHT_NUM 11
 
 static bool SEPARATED(effect_params_t* params) {
   RGB_MATRIX_USE_LIMITS(led_min, led_max);
