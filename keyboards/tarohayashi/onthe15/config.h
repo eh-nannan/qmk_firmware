@@ -93,8 +93,6 @@
 
 /* ETC */
 #define DEBOUNCE 5
-#define NO_ACTION_MACRO
-#define NO_ACTION_FUNCTION
 #define NO_MUSIC_MODE
 #define LAYER_STATE_8BIT
 #undef LOCKING_SUPPORT_ENABLE
