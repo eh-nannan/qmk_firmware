@@ -32,3 +32,18 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
       RGB_TOG,RGB_HUD,RGB_SAD,RGB_VAD,RGB_SPD,XXXXXXX
     ),
   };
+
+/*
+void keyboard_post_init_user(void) {
+  // Customise these values to desired behaviour
+  debug_enable=true;
+  debug_matrix=true;
+  debug_keyboard=true;
+  //debug_mouse=true;
+}
+
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    uprintf("count: %u, tick %u\n", g_last_hit_tracker.count, g_last_hit_tracker.tick[g_last_hit_tracker.count-1]);
+  return true;
+}
+*/

@@ -74,6 +74,7 @@ static bool OVERGLOW_REACTIVE_SEPARATED(effect_params_t* params) {
     for (; i < UNDERGLOW_NUM; i++) {
         RGB_MATRIX_TEST_LED_FLAGS();
         HSV hsv = rgb_matrix_config.hsv;
+        hsv.h += (rgb_matrix_config.speed / 2) + (40 * get_highest_layer(layer_state));
         RGB rgb = rgb_matrix_hsv_to_rgb(hsv);
         rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
     }
@@ -92,7 +93,6 @@ static bool OVERGLOW_REACTIVE_SEPARATED(effect_params_t* params) {
             hsv.v = qadd8(hsv.v, 255 - effect);
         }
         hsv.v = scale8(hsv.v, rgb_matrix_config.hsv.v);
-        hsv.h += (rgb_matrix_config.speed / 2) + (40 * get_highest_layer(layer_state));
         RGB rgb = rgb_matrix_hsv_to_rgb(hsv);
         rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
     }
