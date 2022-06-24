@@ -15,23 +15,24 @@ RGB_MATRIX_EFFECT(UNDERGLOW_REACTIVE_SEPARATED)
 #define OVERGLOW_NUM 12
 
 static bool SEPARATED(effect_params_t* params) {
-  RGB_MATRIX_USE_LIMITS(led_min, led_max);
-
-  HSV hsv = rgb_matrix_config.hsv;
-  RGB rgbo = rgb_matrix_hsv_to_rgb(hsv);
-  hsv.h += (rgb_matrix_config.speed / 2) + (40 * get_highest_layer(layer_state));
-  RGB rgbu = rgb_matrix_hsv_to_rgb(hsv);
-  uint8_t i = led_min;
-  for (; i < UNDERGLOW_NUM; i++) {
-    RGB_MATRIX_TEST_LED_FLAGS();
-    rgb_matrix_set_color(i, rgbu.r, rgbu.g, rgbu.b);
-  }
-  for (; i < UNDERGLOW_NUM + OVERGLOW_NUM; i++) {
-    RGB_MATRIX_TEST_LED_FLAGS();
-    rgb_matrix_set_color(i, rgbo.r, rgbo.g, rgbo.b);
-  }
-
-  return rgb_matrix_check_finished_leds(led_max);
+    RGB_MATRIX_USE_LIMITS(led_min, led_max);
+    uint8_t i = led_min;
+    // UNDERGLOW
+    for (; i < UNDERGLOW_NUM; i++) {
+        RGB_MATRIX_TEST_LED_FLAGS();
+        HSV hsv = rgb_matrix_config.hsv;
+        hsv.h += rgb_matrix_config.speed + (40 * get_highest_layer(layer_state));
+        RGB rgb = rgb_matrix_hsv_to_rgb(hsv);
+        rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
+    }
+    // OVERGLOW
+    for (; i < UNDERGLOW_NUM + OVERGLOW_NUM; i++) {
+        RGB_MATRIX_TEST_LED_FLAGS();
+        HSV hsv = rgb_matrix_config.hsv;
+        RGB rgb = rgb_matrix_hsv_to_rgb(hsv);
+        rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
+    }
+    return rgb_matrix_check_finished_leds(led_max);
 }
 
 static bool OVERGLOW_REACTIVE(effect_params_t* params) {
@@ -74,7 +75,7 @@ static bool OVERGLOW_REACTIVE_SEPARATED(effect_params_t* params) {
     for (; i < UNDERGLOW_NUM; i++) {
         RGB_MATRIX_TEST_LED_FLAGS();
         HSV hsv = rgb_matrix_config.hsv;
-        hsv.h += (rgb_matrix_config.speed / 2) + (40 * get_highest_layer(layer_state));
+        hsv.h += rgb_matrix_config.speed + (40 * get_highest_layer(layer_state));
         RGB rgb = rgb_matrix_hsv_to_rgb(hsv);
         rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
     }
@@ -150,7 +151,6 @@ static bool UNDERGLOW_REACTIVE_SEPARATED(effect_params_t* params) {
             hsv.v = qadd8(hsv.v, 255 - effect);
         }
         hsv.v = scale8(hsv.v, rgb_matrix_config.hsv.v);
-        hsv.h += (rgb_matrix_config.speed / 2) + (40 * get_highest_layer(layer_state));
         RGB rgb = rgb_matrix_hsv_to_rgb(hsv);
         rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
     }
@@ -158,6 +158,7 @@ static bool UNDERGLOW_REACTIVE_SEPARATED(effect_params_t* params) {
     for (; i < UNDERGLOW_NUM + OVERGLOW_NUM; i++) {
         RGB_MATRIX_TEST_LED_FLAGS();
         HSV hsv = rgb_matrix_config.hsv;
+        hsv.h += rgb_matrix_config.speed + (40 * get_highest_layer(layer_state));
         RGB rgb = rgb_matrix_hsv_to_rgb(hsv);
         rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
     }

@@ -30,8 +30,7 @@ static bool SEPARATED(effect_params_t* params) {
     for (; i < BACKLIGHT_NUM_LEFT + UNDERGLOW_NUM_LEFT; i++) {
         RGB_MATRIX_TEST_LED_FLAGS();
         HSV hsv = rgb_matrix_config.hsv;
-        hsv.h += (rgb_matrix_config.speed / 2);
-        //hsv.h += (rgb_matrix_config.speed / 2) + (40 * get_highest_layer(layer_state));
+        hsv.h += rgb_matrix_config.speed;
         RGB rgb = rgb_matrix_hsv_to_rgb(hsv);
         rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
     }
@@ -46,8 +45,7 @@ static bool SEPARATED(effect_params_t* params) {
     for (; i < led_max; i++) {
         RGB_MATRIX_TEST_LED_FLAGS();
         HSV hsv = rgb_matrix_config.hsv;
-        hsv.h += (rgb_matrix_config.speed / 2);
-        //hsv.h += (rgb_matrix_config.speed / 2) + (40 * get_highest_layer(layer_state));
+        hsv.h += rgb_matrix_config.speed;
         RGB rgb = rgb_matrix_hsv_to_rgb(hsv);
         rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
     }
@@ -132,7 +130,7 @@ static bool BACKLIGHT_REACTIVE_SEPARATED(effect_params_t* params) {
     for (; i < BACKLIGHT_NUM_LEFT + UNDERGLOW_NUM_LEFT; i++) {
         RGB_MATRIX_TEST_LED_FLAGS();
         HSV hsv = rgb_matrix_config.hsv;
-        hsv.h += (rgb_matrix_config.speed / 2) + (40 * get_highest_layer(layer_state));
+        hsv.h += rgb_matrix_config.speed;
         RGB rgb = rgb_matrix_hsv_to_rgb(hsv);
         rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
     }
@@ -156,8 +154,6 @@ static bool BACKLIGHT_REACTIVE_SEPARATED(effect_params_t* params) {
     for (; i < led_max; i++) {
         RGB_MATRIX_TEST_LED_FLAGS();
         HSV hsv = rgb_matrix_config.hsv;
-        hsv.h += (rgb_matrix_config.speed / 2);
-        //hsv.h += (rgb_matrix_config.speed / 2) + (40 * get_highest_layer(layer_state));
         RGB rgb = rgb_matrix_hsv_to_rgb(hsv);
         rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
     }
@@ -230,8 +226,7 @@ static bool UNDERGLOW_REACTIVE_SEPARATED(effect_params_t* params) {
     for (; i < BACKLIGHT_NUM_LEFT; i++) {
         RGB_MATRIX_TEST_LED_FLAGS();
         HSV hsv = rgb_matrix_config.hsv;
-        hsv.h += (rgb_matrix_config.speed / 2);
-        //hsv.h += (rgb_matrix_config.speed / 2) + (40 * get_highest_layer(layer_state));
+        hsv.h += rgb_matrix_config.speed;
         RGB rgb = rgb_matrix_hsv_to_rgb(hsv);
         rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
     }
@@ -257,8 +252,7 @@ static bool UNDERGLOW_REACTIVE_SEPARATED(effect_params_t* params) {
     for (; i < BACKLIGHT_NUM_LEFT + UNDERGLOW_NUM_LEFT + BACKLIGHT_NUM_RIGHT; i++) {
         RGB_MATRIX_TEST_LED_FLAGS();
         HSV hsv = rgb_matrix_config.hsv;
-        hsv.h += (rgb_matrix_config.speed / 2);
-        //hsv.h += (rgb_matrix_config.speed / 2) + (40 * get_highest_layer(layer_state));
+        hsv.h += rgb_matrix_config.speed;
         RGB rgb = rgb_matrix_hsv_to_rgb(hsv);
         rgb_matrix_set_color(i, rgb.r, rgb.g, rgb.b);
     }
