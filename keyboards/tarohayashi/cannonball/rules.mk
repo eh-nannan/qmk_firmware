@@ -23,3 +23,4 @@ BLUETOOTH_ENABLE = no       # Enable Bluetooth
 AUDIO_ENABLE = no           # Audio output
 MAGIC_ENABLE = no
 MUSIC_ENABLE = no
+MIDI_ENABLE = yes           # MIDI controls
