@@ -17,7 +17,8 @@ joystick_config_t joystick_axes[JOYSTICK_AXIS_COUNT] = {
 kw_config_t kw_config;      // eeprom保存用
 bool force_scrolling, force_cursoring, force_key_input, force_gaming, slow_mode;   // 一時的モード変更用
 bool joystick_attached;     // ジョイスティックの有無
-float scroll_accumulated_h, scroll_accumulated_v; // スクロール端数保存用
+double prev_x, prev_y;
+double x_accumulator, y_accumulator, h_accumulator, v_accumulator; // 端数保存用
 int16_t gp27_newt, gp28_newt; // ジョイスティックの初期値
 int16_t gp27_max, gp28_max, gp27_min, gp28_min; // ジョイスティックの最大値、最小値
 uint16_t joystick_offset_min, joystick_offset_max; // ジョイスティックの小さい値、大きい値を無視する範囲
@@ -143,8 +144,12 @@ void matrix_init_kb(void) {
 // 初期化
 void pointing_device_init_kb(void){
     kw_config.raw = eeconfig_read_kb();
-    scroll_accumulated_h = 0;
-    scroll_accumulated_v = 0;
+    x_accumulator = 0.0;
+    y_accumulator = 0.0;
+    h_accumulator = 0.0;
+    v_accumulator = 0.0;
+    prev_x = 0.0;
+    prev_y = 0.0;
     pointing_device_set_cpi(400 + kw_config.spd * 200);
     set_auto_mouse_enable(kw_config.auto_mouse);
 
@@ -152,14 +157,16 @@ void pointing_device_init_kb(void){
 }
 
 /* 諸関数 */
+#define constrain_hid(amt) ((amt) < -127 ? -127 : ((amt) > 127 ? 127 : (amt)))
 // カーソル移動
 report_mouse_t pointing_device_cursoring(double x_rev, double y_rev){
     report_mouse_t mouse_report;
-    mouse_report.x = (int8_t)x_rev;
-    mouse_report.y = (int8_t)y_rev;
-    mouse_report.h = 0;
-    mouse_report.v = 0;
-
+    x_accumulator += x_rev * SENSITIVITY_DIVISOR;
+    y_accumulator += y_rev * SENSITIVITY_DIVISOR;
+    mouse_report.x = (int8_t)constrain_hid(x_accumulator);
+    mouse_report.y = (int8_t)constrain_hid(y_accumulator);
+    x_accumulator -= mouse_report.x;
+    y_accumulator -= mouse_report.y;
 
     return mouse_report;
 }
@@ -183,12 +190,12 @@ report_mouse_t pointing_device_scrolling(double x_rev, double y_rev){
     }
 
     // 端数処理
-    scroll_accumulated_h += (float)x_rev / SCROLL_DIVISOR;
-    scroll_accumulated_v += (float)y_rev / SCROLL_DIVISOR;
-    mouse_report.h = (int8_t)scroll_accumulated_h;
-    mouse_report.v = (int8_t)scroll_accumulated_v;
-    scroll_accumulated_h -= (int8_t)scroll_accumulated_h;
-    scroll_accumulated_v -= (int8_t)scroll_accumulated_v;
+    h_accumulator += x_rev * SENSITIVITY_DIVISOR / SCROLL_DIVISOR;
+    v_accumulator += y_rev * SENSITIVITY_DIVISOR / SCROLL_DIVISOR;
+    mouse_report.h = (int8_t)constrain_hid(h_accumulator);
+    mouse_report.v = (int8_t)constrain_hid(v_accumulator);
+    h_accumulator -= mouse_report.h;
+    v_accumulator -= mouse_report.v;
 
     return mouse_report;
 }
@@ -422,6 +429,19 @@ report_mouse_t pointing_device_task_kb(report_mouse_t mouse_report) {
     double x_rev =  + x_val * cos(rad) - y_val * sin(rad);
     double y_rev =  + x_val * sin(rad) + y_val * cos(rad);
 
+    // 前回移動量を参照して補正
+    double smoothed_x = prev_x * SMOOTHING_FACTOR + x_rev * (1.0 - SMOOTHING_FACTOR);
+    double smoothed_y = prev_y * SMOOTHING_FACTOR + y_rev * (1.0 - SMOOTHING_FACTOR);
+    prev_x = smoothed_x;
+    prev_y = smoothed_y;
+
+    // 動作量で移動量を変える
+    double movement_magnitude = sqrt(smoothed_x * smoothed_x + smoothed_y * smoothed_y);
+    double dynamic_multiplier = 1.0 + movement_magnitude / 10.0;
+    dynamic_multiplier = fmin(fmax(dynamic_multiplier, 0.5), 3.0);
+    x_rev *= SENSITIVITY_MULTIPLIER * dynamic_multiplier;
+    y_rev *= SENSITIVITY_MULTIPLIER * dynamic_multiplier;
+
     // x軸反転処理
     if(kw_config.inv){
             x_rev = -1 * x_rev;
@@ -472,8 +492,12 @@ void clear_keyinput(void){
     unregister_code(keycode_down);
     unregister_code(keycode_left);
     unregister_code(keycode_right);
-    scroll_accumulated_v = 0;
-    scroll_accumulated_h = 0;
+    x_accumulator = 0.0;
+    y_accumulator = 0.0;
+    v_accumulator = 0.0;
+    h_accumulator = 0.0;
+    prev_x = 0.0;
+    prev_y = 0.0;
 }
 
 /* インターフェース */

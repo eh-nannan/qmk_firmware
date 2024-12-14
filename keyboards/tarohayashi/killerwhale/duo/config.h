@@ -30,6 +30,11 @@
 #define INVERT_RIGHT_DEFAULT true
 #define INVERT_SCROLL_DEFAULT false          // スクロールの反転
 
+// 移動量が小さい時の調節
+#define SENSITIVITY_MULTIPLIER 1.2 // 一時的倍率
+#define SENSITIVITY_DIVISOR 0.3    // 最終的な感度調整
+#define SMOOTHING_FACTOR 0.7 // 前の動きの影響度
+
 // スローモード時カーソル速度
 #define CPI_SLOW 300
 #define AMP_SLOW 4.0

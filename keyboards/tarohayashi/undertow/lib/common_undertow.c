@@ -18,7 +18,9 @@ joystick_config_t joystick_axes[JOYSTICK_AXIS_COUNT] = {
 ut_config_t ut_config;         // eeprom保存用
 bool force_scrolling, force_cursoring, force_key_input, force_gaming, slow_mode;          // 一時的モード変更用
 uint8_t joystick_attached;     // ジョイスティックの有無
-bool joystick_initialized;     float scroll_accumulated_h, scroll_accumulated_v;  // スクロール端数保存用
+bool joystick_initialized;
+double prev_x_0, prev_y_0, prev_x_1, prev_y_1;
+double x_accumulator, y_accumulator, h_accumulator, v_accumulator;  // 端数保存用
 int16_t gp29_newt, gp28_newt;              // ジョイスティックの初期値
 int16_t gp29_max, gp28_max, gp29_min, gp28_min; // ジョイスティックの最大値、最小値
 uint16_t joystick_offset_min, joystick_offset_max; // ジョイスティックの有無ョイスティックの小さい値、大きい値を無視する範囲
@@ -188,8 +190,14 @@ void matrix_init_kb(void) {
 // 初期化
 void pointing_device_init_kb(void){
     ut_config.raw = eeconfig_read_kb();
-    scroll_accumulated_h = 0;
-    scroll_accumulated_v = 0;
+    prev_x_0 = 0.0;
+    prev_y_0 = 0.0;
+    prev_x_1 = 0.0;
+    prev_y_1 = 0.0;
+    h_accumulator = 0.0;
+    v_accumulator = 0.0;
+    x_accumulator = 0.0;
+    y_accumulator = 0.0;
     pmw33xx_init(1);
     pmw33xx_set_cpi(0, 1000 + ut_config.spd_0 * 250); // SIDE0
     pmw33xx_set_cpi(1, 1000 + ut_config.spd_1 * 250); // SIDE1
@@ -205,6 +213,7 @@ void pointing_device_init_kb(void){
 // 実タスク
 #define constrain_hid(amt) ((amt) < -127 ? -127 : ((amt) > 127 ? 127 : (amt)))
 report_mouse_t pointing_device_task_kb(report_mouse_t mouse_report) {
+
     /* SIDE0 */
     // 数値取得、角度、反転処理
     double rad = (double)ut_config.angle_0 * 12.0 * (M_PI / 180.0) * -1.0;
@@ -212,7 +221,21 @@ report_mouse_t pointing_device_task_kb(report_mouse_t mouse_report) {
     double y_rev_0 =  + mouse_report.x * sin(rad) + mouse_report.y * cos(rad);
     double h_rev_0 = 0.0;
     double v_rev_0 = 0.0;
+
+    double smoothed_x_0 = prev_x_0 * SMOOTHING_FACTOR + x_rev_0 * (1.0 - SMOOTHING_FACTOR);
+    double smoothed_y_0 = prev_y_0 * SMOOTHING_FACTOR + y_rev_0 * (1.0 - SMOOTHING_FACTOR);
+    prev_x_0 = smoothed_x_0;
+    prev_y_0 = smoothed_y_0;
+
+    // 動作量で移動量を変える
+    double movement_magnitude_0 = sqrt(smoothed_x_0 * smoothed_x_0 + smoothed_y_0 * smoothed_y_0);
+    double dynamic_multiplier_0 = 1.0 + movement_magnitude_0 / 10.0;
+    dynamic_multiplier_0 = fmin(fmax(dynamic_multiplier_0, 0.5), 3.0);
+    x_rev_0 *= SENSITIVITY_MULTIPLIER * dynamic_multiplier_0;
+    y_rev_0 *= SENSITIVITY_MULTIPLIER * dynamic_multiplier_0;
+
     if(ut_config.inv_0){ x_rev_0 = -1.0 * x_rev_0; }
+
     // モード決定
     uint8_t cur_mode = ut_config.pd_mode_0;
     if(force_cursoring){
@@ -282,7 +305,21 @@ report_mouse_t pointing_device_task_kb(report_mouse_t mouse_report) {
     double y_rev_1 =  + report.delta_x * sin(rad) + report.delta_y * cos(rad);
     double h_rev_1 = 0.0;
     double v_rev_1 = 0.0;
+
+    double smoothed_x_1 = prev_x_1 * SMOOTHING_FACTOR + x_rev_1 * (1.0 - SMOOTHING_FACTOR);
+    double smoothed_y_1 = prev_y_1 * SMOOTHING_FACTOR + y_rev_1 * (1.0 - SMOOTHING_FACTOR);
+    prev_x_1 = smoothed_x_1;
+    prev_y_1 = smoothed_y_1;
+
+    // 動作量で移動量を変える
+    double movement_magnitude_1 = sqrt(smoothed_x_1 * smoothed_x_1 + smoothed_y_1 * smoothed_y_1);
+    double dynamic_multiplier_1 = 1.0 + movement_magnitude_1 / 10.0;
+    dynamic_multiplier_1 = fmin(fmax(dynamic_multiplier_1, 0.5), 3.0);
+    x_rev_1 *= SENSITIVITY_MULTIPLIER * dynamic_multiplier_1;
+    y_rev_1 *= SENSITIVITY_MULTIPLIER * dynamic_multiplier_1;
+
     if(ut_config.inv_1){ x_rev_1 = -1.0 * x_rev_1; }
+
     // モード決定
     cur_mode = ut_config.pd_mode_1;
     if(force_cursoring){
@@ -569,16 +606,20 @@ report_mouse_t pointing_device_task_kb(report_mouse_t mouse_report) {
         }
     }
 
-    // SUM
-    mouse_report.x = (int8_t)constrain_hid(x_rev_0 + x_rev_1 + x_rev_js);
-    mouse_report.y = (int8_t)constrain_hid(y_rev_0 + y_rev_1 + y_rev_js);
+    // 合算して誤差修正
+    x_accumulator += (x_rev_0 + x_rev_1) * SMOOTHING_FACTOR + x_rev_js;
+    y_accumulator += (y_rev_0 + y_rev_1) * SMOOTHING_FACTOR + y_rev_js;
+    h_accumulator += ((h_rev_0 + h_rev_1) * SMOOTHING_FACTOR + h_rev_js) / SCROLL_DIVISOR;
+    v_accumulator += ((v_rev_0 + v_rev_1) * SMOOTHING_FACTOR + v_rev_js) / SCROLL_DIVISOR;
+    mouse_report.x = (int8_t)constrain_hid(x_accumulator);
+    mouse_report.y = (int8_t)constrain_hid(y_accumulator);
+    mouse_report.h = (int8_t)constrain_hid(h_accumulator);
+    mouse_report.v = (int8_t)constrain_hid(v_accumulator);
+    x_accumulator -= mouse_report.x;
+    y_accumulator -= mouse_report.y;
+    h_accumulator -= mouse_report.h;
+    v_accumulator -= mouse_report.v;
 
-    scroll_accumulated_h += constrain_hid((float)(h_rev_0 + h_rev_1 + h_rev_js) / SCROLL_DIVISOR);
-    scroll_accumulated_v += constrain_hid((float)(v_rev_0 + v_rev_1 + v_rev_js) / SCROLL_DIVISOR);
-    mouse_report.h = (int8_t)scroll_accumulated_h;
-    mouse_report.v = (int8_t)scroll_accumulated_v;
-    scroll_accumulated_h -= (int8_t)scroll_accumulated_h;
-    scroll_accumulated_v -= (int8_t)scroll_accumulated_v;
 
     return pointing_device_task_user(mouse_report);
 }
@@ -611,8 +652,14 @@ void clear_keyinput(void){
     unregister_code(keycode_down_1);
     unregister_code(keycode_left_1);
     unregister_code(keycode_right_1);
-    scroll_accumulated_v = 0;
-    scroll_accumulated_h = 0;
+    v_accumulator = 0.0;
+    h_accumulator = 0.0;
+    prev_x_0 = 0.0;
+    prev_y_0 = 0.0;
+    prev_x_1 = 0.0;
+    prev_y_1 = 0.0;
+    x_accumulator = 0.0;
+    y_accumulator = 0.0;
 }
 /* インターフェース */
 // ジョイスティックの初期化
