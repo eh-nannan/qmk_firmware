@@ -11,8 +11,8 @@ bool force_scrolling; // 一時的モード変更用
 bool force_cursoring; // 一時的モード変更用
 bool force_key_input; // 一時的モード変更用
 bool slow_mode;       // 一時的モード変更用
-double prev_x, prev_y;
-double x_accumulator, y_accumulator, h_accumulator, v_accumulator; // 端数保存用
+float prev_x, prev_y;
+float x_accumulator, y_accumulator, h_accumulator, v_accumulator; // 端数保存用
 
 // 仮想十字キー設定用変数
 keypos_t key_up;
@@ -113,19 +113,19 @@ void pointing_device_init_kb(void){
 report_mouse_t pointing_device_task_kb(report_mouse_t mouse_report) {
 
     // 角度補正
-    double rad;
-    rad = (double)ot17_config.angle * 6.0 * (M_PI / 180.0) * -1.0;
-    double x_rev =  + (double)mouse_report.x * cos(rad) - (double)mouse_report.y * sin(rad);
-    double y_rev =  + (double)mouse_report.x * sin(rad) + (double)mouse_report.y * cos(rad);
+    float rad;
+    rad = (float)ot17_config.angle * 6.0 * (M_PI / 180.0) * -1.0;
+    float x_rev =  + (float)mouse_report.x * cos(rad) - (float)mouse_report.y * sin(rad);
+    float y_rev =  + (float)mouse_report.x * sin(rad) + (float)mouse_report.y * cos(rad);
 
-    double smoothed_x = prev_x * SMOOTHING_FACTOR + x_rev * (1.0 - SMOOTHING_FACTOR);
-    double smoothed_y = prev_y * SMOOTHING_FACTOR + y_rev * (1.0 - SMOOTHING_FACTOR);
+    float smoothed_x = prev_x * SMOOTHING_FACTOR + x_rev * (1.0 - SMOOTHING_FACTOR);
+    float smoothed_y = prev_y * SMOOTHING_FACTOR + y_rev * (1.0 - SMOOTHING_FACTOR);
     prev_x = smoothed_x;
     prev_y = smoothed_y;
 
     // 動作量で移動量を変える
-    double movement_magnitude = sqrt(smoothed_x * smoothed_x + smoothed_y * smoothed_y);
-    double dynamic_multiplier = 1.0 + movement_magnitude / 10.0;
+    float movement_magnitude = sqrt(smoothed_x * smoothed_x + smoothed_y * smoothed_y);
+    float dynamic_multiplier = 1.0 + movement_magnitude / 10.0;
     dynamic_multiplier = fmin(fmax(dynamic_multiplier, 0.5), 3.0);
     x_rev *= SENSITIVITY_MULTIPLIER * dynamic_multiplier;
     y_rev *= SENSITIVITY_MULTIPLIER * dynamic_multiplier;

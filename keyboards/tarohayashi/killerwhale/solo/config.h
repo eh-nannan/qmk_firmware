@@ -25,7 +25,7 @@
 
 // CPI = 400 + spd * 200 / AMP = 4.0 + (double)spd * 3.0
 #define SPD_OPTION_MAX 15 // 固定: 最大値
-#define SPD_DEFAULT 5
+#define SPD_DEFAULT 4
 
 // 角度 = angle * 6
 #define ANGLE_OPTION_MAX 59 // 固定: 最大値
@@ -36,8 +36,8 @@
 #define INVERT_SCROLL_DEFAULT false    // スクロールの反転
 
 // 移動量が小さい時の調節
-#define SENSITIVITY_MULTIPLIER 1.2 // 一時的倍率
-#define SENSITIVITY_DIVISOR 0.3    // 最終的な感度調整
+#define SENSITIVITY_MULTIPLIER 1.1 // 一時的倍率
+#define SENSITIVITY_DIVISOR 0.5    // 最終的な感度調整
 #define SMOOTHING_FACTOR 0.7 // 前の動きの影響度
 
 // スローモード時カーソル速度
